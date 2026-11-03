@@ -267,20 +267,17 @@ class InventoryController extends Controller
                     },
                 ])
                 ->get()
-                ->mapWithKeys(function ($user) {
-
-                    $badge = $user->badges->first();
-
-                    if (!$badge || !$badge->pivot->plant) {
-                        return [];
-                    }
-
-                    return [
-                        $badge->pivot->plant => [
-                            'name' => $user->name,
-                            'employee_number' => $user->employee_number,
-                        ],
-                    ];
+                ->flatMap(function ($user) {
+                    return $user->badges
+                        ->filter(fn ($badge) => !empty($badge->pivot->plant))
+                        ->mapWithKeys(function ($badge) use ($user) {
+                            return [
+                                $badge->pivot->plant => [
+                                    'name' => $user->name,
+                                    'employee_number' => $user->employee_number,
+                                ],
+                            ];
+                        });
                 });
 
         return view('inventory', [
